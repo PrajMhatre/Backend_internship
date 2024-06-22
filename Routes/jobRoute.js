@@ -1,55 +1,54 @@
-const express =require("express")
-const router= express.Router();
-const Job=require("../Model/Jobs");
+const express = require("express");
+const router = express.Router();
+const Job = require("../Model/Jobs");
+const jobData = require("../Data/JobsDataAvl");
 
-
-
-router.post("/",async (req,res)=>{
-    const JobData=new Job({
-        title: req.body.title,
-        company: req.body.company,
-        location: req.body.location,
-        Experience: req.body.experience,
-        category: req.body.category,
-        aboutCompany:req.body.aboutCompany,
-        aboutInternship:req.body.aboutInternship,
-        Whocanapply: req.body.Whocanapply,
-        perks: req.body.perks,
-        numberOfopning: req.body.numberOfopning,
-        AdditionalInfo:req.body.AdditionalInfo,
-        CTC: req.body.ctc,
-        StartDate:req.body.StartDate,
-    })
-    await JobData.save().then((data)=>{
-        res.send(data)
-    }).catch((error)=>{
-        console.log(error,"not able to post the data")
-    })
-})
-
-router.get("/",async (req,res)=>{
+// POST route to add new jobs from jobData
+router.post("/", async (req, res) => {
     try {
-        const data=await Job.find();
-        res.json(data) .status(200)
+        const Jobs = jobData;
+
+        const savedJobs = [];
+
+        for (const jobData of Jobs) {
+            const newJob = new Job(jobData);
+            const savedJob = await newJob.save();
+            savedJobs.push(savedJob);
+        }
+
+        // Send the saved data as the response
+        res.send(savedJobs);
+    } catch (error) {
+        console.error("Error while posting the data", error);
+        res.status(500).send("Internal Server Error");
+    }
+});
+
+// GET route to retrieve all jobs
+router.get("/", async (req, res) => {
+    try {
+        const data = await Job.find();
+        res.status(200).json(data);
     } catch (error) {
         console.log(error);
-        res.status(404).json({error:"Internal server error "})
+        res.status(404).json({ error: "Internal server error" });
     }
-})
+});
 
-
-router.get("/:id", async (req,res)=>{
-    const {id}=req.params;
+// GET route to retrieve job by ID
+router.get("/:id", async (req, res) => {
+    const { id } = req.params;
     try {
-        const data=await Job.findById(id);
+        const data = await Job.findById(id);
         if (!data) {
-
-             res.status(404).json({error:"Internship is not found "})
+            res.status(404).json({ error: "Job not found" });
+        } else {
+            res.status(200).json(data);
         }
-        res.json(data) .status(200)
     } catch (error) {
-        console.log(err);
-        res.status(404).json({error:"Internal server error "})
+        console.log(error);
+        res.status(404).json({ error: "Internal server error" });
     }
-})
-module.exports=router
+});
+
+module.exports = router;
